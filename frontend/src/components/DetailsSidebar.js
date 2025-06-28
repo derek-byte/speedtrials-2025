@@ -71,85 +71,34 @@ const DetailsSidebar = ({ isOpen, system, onClose }) => {
     <>
       {/* Backdrop */}
       <div 
-        className={`fixed inset-0 bg-black/50 transition-opacity duration-300 z-40 ${
+        className={`fixed inset-0 transition-opacity duration-300 z-40 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onClose}
         style={{ 
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          zIndex: 9998,
-          opacity: isOpen ? 1 : 0,
-          pointerEvents: isOpen ? 'auto' : 'none',
-          transition: 'opacity 300ms ease-in-out'
+          zIndex: 9998
         }}
       />
 
       {/* Sidebar */}
       <div 
-        className={`fixed right-0 top-0 h-full w-96 bg-gray-900 border-l border-gray-800 z-50 ${
-          isOpen ? 'transform translate-x-0' : 'transform translate-x-full'
-        } transition-transform duration-300 ease-in-out`} 
+        className={`fixed right-0 top-0 h-full w-96 bg-gray-900 border-l border-gray-800 z-50 transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
         style={{ 
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          height: '100vh',
-          width: '384px',
-          backgroundColor: '#111827',
-          borderLeft: '1px solid #374151',
           zIndex: 9999,
-          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 400ms cubic-bezier(0.25, 0.46, 0.45, 0.94)'
         }}
       >
         {/* Header */}
-        <div 
-          className="flex items-center justify-between p-6 border-b border-gray-800"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '24px',
-            borderBottom: '1px solid #374151'
-          }}
-        >
-          <h2 
-            className="text-lg font-semibold text-white"
-            style={{
-              fontSize: '18px',
-              fontWeight: '600',
-              color: 'white',
-              margin: 0
-            }}
-          >
-            System Details
-          </h2>
+        <div className="flex items-center justify-between p-6 border-b border-gray-800">
+          <h2 className="text-lg font-semibold text-white">System Details</h2>
           <button 
             onClick={onClose}
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-            style={{
-              padding: '8px',
-              backgroundColor: 'transparent',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              color: '#9ca3af',
-              transition: 'background-color 200ms ease'
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#1f2937'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+            className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400"
           >
-            <svg 
-              style={{ width: '20px', height: '20px' }} 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>

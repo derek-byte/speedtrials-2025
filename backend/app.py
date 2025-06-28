@@ -236,6 +236,7 @@ def get_map_data():
 
 def create_mock_georgia_data():
     """Create mock data with real Georgia coordinates for demo"""
+    # fix this to use real data
     georgia_cities = [
         {"name": "Atlanta Water System", "lat": 33.7490, "lng": -84.3880, "city": "Atlanta"},
         {"name": "Augusta Utilities", "lat": 33.4735, "lng": -82.0105, "city": "Augusta"},
