@@ -7,6 +7,9 @@ import DetailsSidebar from './components/DetailsSidebar';
 import UnknownCoordinatesPanel from './components/UnknownCoordinatesPanel';
 import StatsBar from './components/StatsBar';
 import ViolationsReport from './components/ViolationsReport';
+import PublicLookup from './components/PublicLookup';
+import OperatorDashboard from './components/OperatorDashboard';
+import RegulatorFieldKit from './components/RegulatorFieldKit';
 
 // Dashboard Component
 const Dashboard = () => {
@@ -46,25 +49,89 @@ const Dashboard = () => {
       <header className="border-b border-gray-800 bg-black/95 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                  <circle cx="12" cy="9" r="1.5" fill="white"/>
-                  <path d="M12 15.5c-2.5 0-4.5 1-4.5 2.25V19h9v-1.25c0-1.25-2-2.25-4.5-2.25z" opacity="0.7"/>
-                </svg>
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <img 
+                src="/logo.jpeg" 
+                alt="AquaWatch Georgia Logo" 
+                style={{ 
+                  width: '40px', 
+                  height: '40px', 
+                  borderRadius: '12px', 
+                  objectFit: 'cover',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                }}
+              />
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight">AquaWatch Georgia</h1>
-                <p className="text-gray-400 text-sm mt-1">Water Quality Monitoring Dashboard</p>
+                <h1 style={{ fontSize: '24px', fontWeight: '600', letterSpacing: '-0.025em', color: 'white', margin: 0 }}>AquaWatch Georgia</h1>
+                <p style={{ color: '#9ca3af', fontSize: '14px', marginTop: '4px', margin: '4px 0 0 0' }}>Water Quality Monitoring Dashboard</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <HealthCheck />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+              <nav style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                <button
+                  onClick={() => navigate('/public')}
+                  style={{ 
+                    cursor: 'pointer', 
+                    background: 'none', 
+                    border: 'none',
+                    fontSize: '12px',
+                    color: '#9ca3af',
+                    padding: '12px',
+                    transition: 'color 200ms ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.color = 'white'}
+                  onMouseLeave={(e) => e.target.style.color = '#9ca3af'}
+                >
+                  Public Portal
+                </button>
+                <button
+                  onClick={() => navigate('/operator')}
+                  style={{ 
+                    cursor: 'pointer', 
+                    background: 'none', 
+                    border: 'none',
+                    fontSize: '12px',
+                    color: '#9ca3af',
+                    padding: '12px',
+                    transition: 'color 200ms ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.color = 'white'}
+                  onMouseLeave={(e) => e.target.style.color = '#9ca3af'}
+                >
+                  Operator Dashboard
+                </button>
+                <button
+                  onClick={() => navigate('/regulator')}
+                  style={{ 
+                    cursor: 'pointer', 
+                    background: 'none', 
+                    border: 'none',
+                    fontSize: '12px',
+                    color: '#9ca3af',
+                    padding: '12px',
+                    transition: 'color 200ms ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.color = 'white'}
+                  onMouseLeave={(e) => e.target.style.color = '#9ca3af'}
+                >
+                  Field Kit
+                </button>
+              </nav>
+              <div style={{ height: '16px', width: '1px', backgroundColor: '#4b5563', margin: '0 8px' }}></div>
+              <div style={{ padding: '0 12px' }}>
+                <HealthCheck />
+              </div>
               <span 
                 onClick={handleExportData}
-                className="text-xs text-white cursor-pointer hover:text-gray-300 transition-colors"
-                style={{ cursor: 'pointer' }}
+                style={{ 
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  color: 'white',
+                  padding: '12px',
+                  transition: 'color 200ms ease'
+                }}
+                onMouseEnter={(e) => e.target.style.color = '#d1d5db'}
+                onMouseLeave={(e) => e.target.style.color = 'white'}
               >
                 Export Data
               </span>
@@ -134,6 +201,9 @@ function App() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/violations-report" element={<ViolationsReportPage />} />
+        <Route path="/public" element={<PublicLookup />} />
+        <Route path="/operator" element={<OperatorDashboard />} />
+        <Route path="/regulator" element={<RegulatorFieldKit />} />
       </Routes>
     </Router>
   );
