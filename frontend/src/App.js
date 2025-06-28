@@ -80,7 +80,7 @@ const Dashboard = () => {
           {/* Stats Bar */}
           <StatsBar />
 
-          {/* Map */}
+          {/* Map with Filters */}
           <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
             <WaterSystemsMap onSystemSelect={handleSystemSelect} />
           </div>

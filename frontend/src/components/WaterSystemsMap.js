@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 import axios from 'axios';
+import MapFilters from './MapFilters';
+
+// Keep libraries as a static constant to prevent reloading
+const GOOGLE_MAPS_LIBRARIES = ['geometry'];
 
 const containerStyle = {
   width: '100%',
@@ -63,6 +67,7 @@ const mapStyles = [
 const WaterSystemsMap = ({ onSystemSelect }) => {
   const [systems, setSystems] = useState([]);
   const [filteredSystems, setFilteredSystems] = useState([]);
+  const [displayedSystems, setDisplayedSystems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [map, setMap] = useState(null);
@@ -81,6 +86,7 @@ const WaterSystemsMap = ({ onSystemSelect }) => {
         
         setSystems(systemsData);
         setFilteredSystems(systemsData);
+        setDisplayedSystems(systemsData);
         setLoading(false);
       } catch (err) {
         setError('Failed to fetch map data');
@@ -91,16 +97,23 @@ const WaterSystemsMap = ({ onSystemSelect }) => {
     fetchMapData();
   }, []);
 
+  // Risk level filter effect (separate from main filters)
   useEffect(() => {
-    if (!activeFilter) {
-      setFilteredSystems(systems);
-    } else {
-      const filtered = systems.filter(system => 
+    let baseFiltered = filteredSystems;
+    
+    if (activeFilter) {
+      baseFiltered = filteredSystems.filter(system => 
         system.risk_level?.toLowerCase() === activeFilter.toLowerCase()
       );
-      setFilteredSystems(filtered);
     }
-  }, [activeFilter, systems]);
+    
+    setDisplayedSystems(baseFiltered);
+  }, [activeFilter, filteredSystems]);
+
+  // Handle filter changes from MapFilters component
+  const handleFiltersChange = useCallback((filtered) => {
+    setFilteredSystems(filtered);
+  }, []);
 
   const handleRiskFilterClick = (riskLevel) => {
     if (activeFilter === riskLevel) {
@@ -142,15 +155,25 @@ const WaterSystemsMap = ({ onSystemSelect }) => {
   }
 
   return (
-    <div className="relative">
-      {/* Map Controls */}
-      <div className="absolute top-4 left-4 z-10 bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 border border-gray-700">
+    <div className="space-y-4">
+      {/* Map Filters */}
+      <MapFilters 
+        onFiltersChange={handleFiltersChange}
+        systems={systems}
+      />
+      
+      {/* Map Container */}
+      <div className="relative">
+        {/* Map Controls */}
+        <div className="absolute top-4 left-4 z-10 bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 border border-gray-700">
         <div className="text-white text-sm font-medium mb-2">Water Systems</div>
         <div className="text-gray-400 text-xs">
-          {filteredSystems.length} of {systems.length} locations
-          {activeFilter && (
+          {displayedSystems.length} of {systems.length} locations
+          {(filteredSystems.length !== systems.length || activeFilter) && (
             <div className="text-blue-400 text-xs mt-1">
-              Filtered: {activeFilter} Risk
+              {filteredSystems.length !== systems.length && `${filteredSystems.length} filtered`}
+              {filteredSystems.length !== systems.length && activeFilter && ', '}
+              {activeFilter && `${activeFilter} Risk`}
             </div>
           )}
         </div>
@@ -222,7 +245,7 @@ const WaterSystemsMap = ({ onSystemSelect }) => {
       
       <LoadScript 
         googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY_HERE'}
-        libraries={['geometry']}
+        libraries={GOOGLE_MAPS_LIBRARIES}
         preventGoogleFontsLoading={true}
       >
         <GoogleMap
@@ -243,13 +266,10 @@ const WaterSystemsMap = ({ onSystemSelect }) => {
             gestureHandling: 'greedy',
             keyboardShortcuts: false,
             mapDataControl: false,
-            clickableIcons: false,
-            restriction: {
-              strictBounds: false
-            }
+            clickableIcons: false
           }}
         >
-          {filteredSystems.map((system) => (
+          {displayedSystems.map((system) => (
             <Marker
               key={system.id}
               position={{ lat: system.lat, lng: system.lng }}
@@ -260,6 +280,7 @@ const WaterSystemsMap = ({ onSystemSelect }) => {
           ))}
         </GoogleMap>
       </LoadScript>
+      </div>
     </div>
   );
 };
