@@ -42,15 +42,13 @@ function App() {
             </div>
             <div className="flex items-center space-x-4">
               <HealthCheck />
-              <button 
+              <span 
                 onClick={handleExportData}
-                className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 shadow-md text-white transform hover:scale-105 border border-indigo-800/20"
+                className="text-xs text-white cursor-pointer hover:text-gray-300 transition-colors"
+                style={{ cursor: 'pointer' }}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <span>Export Data</span>
-              </button>
+                Export Data
+              </span>
             </div>
           </div>
         </div>

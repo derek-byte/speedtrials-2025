@@ -157,18 +157,15 @@ const WaterSystemsMap = ({ onSystemSelect }) => {
       </div>
 
       {/* Interactive Risk Level Filter */}
-      <div className="absolute top-4 right-4 z-10 bg-gray-800/95 backdrop-blur-sm rounded-lg border border-gray-700/50 shadow-lg">
-        <div className="p-3">
-          <div className="text-white text-sm font-medium mb-2 flex items-center justify-between">
-            <span>Risk Levels</span>
-            {activeFilter && (
-              <button
-                onClick={() => setActiveFilter(null)}
-                className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-              >
-                Clear Filter
-              </button>
-            )}
+      <div className="absolute top-4 right-4 z-10 bg-gray-800 backdrop-blur-md rounded-xl border-2 border-gray-600 shadow-xl">
+        <div className="p-4">
+          <div 
+            className="text-white text-sm font-medium mb-2 cursor-pointer hover:text-gray-300 transition-colors"
+            onClick={() => setActiveFilter(null)}
+            title={activeFilter ? "Click to reset filter" : "Risk Levels"}
+            style={{ cursor: 'pointer' }}
+          >
+            Risk Levels
           </div>
           <div className="space-y-1 text-xs">
             <div 
@@ -243,7 +240,13 @@ const WaterSystemsMap = ({ onSystemSelect }) => {
             streetViewControl: false,
             rotateControl: false,
             fullscreenControl: true,
-            gestureHandling: 'greedy'
+            gestureHandling: 'greedy',
+            keyboardShortcuts: false,
+            mapDataControl: false,
+            clickableIcons: false,
+            restriction: {
+              strictBounds: false
+            }
           }}
         >
           {filteredSystems.map((system) => (
