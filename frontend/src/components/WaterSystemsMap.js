@@ -62,9 +62,11 @@ const mapStyles = [
 
 const WaterSystemsMap = ({ onSystemSelect }) => {
   const [systems, setSystems] = useState([]);
+  const [filteredSystems, setFilteredSystems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [map, setMap] = useState(null);
+  const [activeFilter, setActiveFilter] = useState(null);
 
   useEffect(() => {
     const fetchMapData = async () => {
@@ -78,6 +80,7 @@ const WaterSystemsMap = ({ onSystemSelect }) => {
         }));
         
         setSystems(systemsData);
+        setFilteredSystems(systemsData);
         setLoading(false);
       } catch (err) {
         setError('Failed to fetch map data');
@@ -87,6 +90,25 @@ const WaterSystemsMap = ({ onSystemSelect }) => {
 
     fetchMapData();
   }, []);
+
+  useEffect(() => {
+    if (!activeFilter) {
+      setFilteredSystems(systems);
+    } else {
+      const filtered = systems.filter(system => 
+        system.risk_level?.toLowerCase() === activeFilter.toLowerCase()
+      );
+      setFilteredSystems(filtered);
+    }
+  }, [activeFilter, systems]);
+
+  const handleRiskFilterClick = (riskLevel) => {
+    if (activeFilter === riskLevel) {
+      setActiveFilter(null); // Clear filter if clicking the same one
+    } else {
+      setActiveFilter(riskLevel);
+    }
+  };
 
   const onLoad = useCallback((map) => {
     setMap(map);
@@ -124,28 +146,79 @@ const WaterSystemsMap = ({ onSystemSelect }) => {
       {/* Map Controls */}
       <div className="absolute top-4 left-4 z-10 bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 border border-gray-700">
         <div className="text-white text-sm font-medium mb-2">Water Systems</div>
-        <div className="text-gray-400 text-xs">{systems.length} locations</div>
+        <div className="text-gray-400 text-xs">
+          {filteredSystems.length} of {systems.length} locations
+          {activeFilter && (
+            <div className="text-blue-400 text-xs mt-1">
+              Filtered: {activeFilter} Risk
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Legend */}
-      <div className="absolute top-4 right-4 z-10 bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 border border-gray-700">
-        <div className="text-white text-sm font-medium mb-2">Risk Levels</div>
-        <div className="space-y-1 text-xs">
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-            <span className="text-gray-300">High Risk</span>
+      {/* Interactive Risk Level Filter */}
+      <div className="absolute top-4 right-4 z-10 bg-gray-800/95 backdrop-blur-sm rounded-lg border border-gray-700/50 shadow-lg">
+        <div className="p-3">
+          <div className="text-white text-sm font-medium mb-2 flex items-center justify-between">
+            <span>Risk Levels</span>
+            {activeFilter && (
+              <button
+                onClick={() => setActiveFilter(null)}
+                className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                Clear Filter
+              </button>
+            )}
           </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-orange-400 rounded-full"></div>
-            <span className="text-gray-300">Medium Risk</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-            <span className="text-gray-300">Low Risk</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-            <span className="text-gray-300">Good</span>
+          <div className="space-y-1 text-xs">
+            <div 
+              className={`flex items-center space-x-2 cursor-pointer p-1 rounded hover:bg-gray-700/50 transition-all duration-200 select-none ${
+                activeFilter === 'High' ? 'bg-red-500/20 border border-red-500/30' : ''
+              }`}
+              onClick={() => handleRiskFilterClick('High')}
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="w-3 h-3 bg-red-400 rounded-full hover:scale-110 transition-transform duration-200"></div>
+              <span className={`text-gray-300 hover:text-white transition-colors cursor-pointer ${
+                activeFilter === 'High' ? 'text-white font-medium' : ''
+              }`}>High Risk</span>
+            </div>
+            <div 
+              className={`flex items-center space-x-2 cursor-pointer p-1 rounded hover:bg-gray-700/50 transition-all duration-200 select-none ${
+                activeFilter === 'Medium' ? 'bg-orange-500/20 border border-orange-500/30' : ''
+              }`}
+              onClick={() => handleRiskFilterClick('Medium')}
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="w-3 h-3 bg-orange-400 rounded-full hover:scale-110 transition-transform duration-200"></div>
+              <span className={`text-gray-300 hover:text-white transition-colors cursor-pointer ${
+                activeFilter === 'Medium' ? 'text-white font-medium' : ''
+              }`}>Medium Risk</span>
+            </div>
+            <div 
+              className={`flex items-center space-x-2 cursor-pointer p-1 rounded hover:bg-gray-700/50 transition-all duration-200 select-none ${
+                activeFilter === 'Low' ? 'bg-yellow-500/20 border border-yellow-500/30' : ''
+              }`}
+              onClick={() => handleRiskFilterClick('Low')}
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="w-3 h-3 bg-yellow-400 rounded-full hover:scale-110 transition-transform duration-200"></div>
+              <span className={`text-gray-300 hover:text-white transition-colors cursor-pointer ${
+                activeFilter === 'Low' ? 'text-white font-medium' : ''
+              }`}>Low Risk</span>
+            </div>
+            <div 
+              className={`flex items-center space-x-2 cursor-pointer p-1 rounded hover:bg-gray-700/50 transition-all duration-200 select-none ${
+                activeFilter === 'Good' ? 'bg-green-500/20 border border-green-500/30' : ''
+              }`}
+              onClick={() => handleRiskFilterClick('Good')}
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="w-3 h-3 bg-green-400 rounded-full hover:scale-110 transition-transform duration-200"></div>
+              <span className={`text-gray-300 hover:text-white transition-colors cursor-pointer ${
+                activeFilter === 'Good' ? 'text-white font-medium' : ''
+              }`}>Good</span>
+            </div>
           </div>
         </div>
       </div>
@@ -173,7 +246,7 @@ const WaterSystemsMap = ({ onSystemSelect }) => {
             gestureHandling: 'greedy'
           }}
         >
-          {systems.map((system) => (
+          {filteredSystems.map((system) => (
             <Marker
               key={system.id}
               position={{ lat: system.lat, lng: system.lng }}
