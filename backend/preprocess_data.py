@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SDWIS Data Preprocessing Script
+SDWIS Data Preprocessing Script (Improved Version)
 Processes raw SDWIS CSV files into a single polished_data.csv for the dashboard
 """
 
@@ -8,6 +8,13 @@ import pandas as pd
 import os
 import sys
 from datetime import datetime
+
+# Import the Georgia locations module
+try:
+    from georgia_locations import get_coordinates
+except ImportError:
+    print("❌ Georgia locations module not found. Make sure georgia_locations.py is in the same directory.")
+    sys.exit(1)
 
 def load_csv_safe(filepath):
     """Safely load CSV file with error handling"""
@@ -122,82 +129,36 @@ def add_violations_data(systems_df, violations_df, quarter='2025Q1'):
     return systems_df
 
 def assign_coordinates(systems_df):
-    """Assign coordinates based on city/county mapping"""
-    print("\n📍 Assigning coordinates...")
-    
-    # Georgia cities/locations with known coordinates
-    georgia_coordinates = {
-        'ATLANTA': (33.7490, -84.3880),
-        'AUGUSTA': (33.4735, -82.0105),
-        'COLUMBUS': (32.4609, -84.9877),
-        'SAVANNAH': (32.0835, -81.0998),
-        'ATHENS': (33.9519, -83.3576),
-        'MACON': (32.8407, -83.6324),
-        'ALBANY': (31.5785, -84.1557),  
-        'ROSWELL': (34.0232, -84.3616),
-        'SANDY SPRINGS': (33.9304, -84.3733),
-        'WARNER ROBINS': (32.6130, -83.6241),
-        'BAXLEY': (31.7793, -82.3470),
-        'SURRENCY': (31.7252, -82.1912),
-        'VALDOSTA': (30.8327, -83.2785),
-        'ROME': (34.2570, -85.1647),
-        'GAINESVILLE': (34.2979, -83.8241),
-        'SMYRNA': (33.8840, -84.5144),
-        'HINESVILLE': (31.8468, -81.5960),
-        'DALTON': (34.7698, -84.9700),
-        'KENNESAW': (34.0234, -84.6155),
-        'JOHNS CREEK': (34.0289, -84.1986)
-    }
-    
-    # County coordinates (approximate centers)
-    georgia_counties = {
-        'FULTON': (33.7490, -84.3880),
-        'GWINNETT': (33.9526, -84.0807),
-        'DEKALB': (33.7673, -84.2806),
-        'COBB': (33.9526, -84.5464),
-        'CLAYTON': (33.5379, -84.3426),
-        'HENRY': (33.4532, -84.1291),
-        'RICHMOND': (33.4735, -82.0105),
-        'MUSCOGEE': (32.4609, -84.9877),
-        'CHATHAM': (32.0835, -81.0998),
-        'CLARKE': (33.9519, -83.3576),
-        'BIBB': (32.8407, -83.6324),
-        'DOUGHERTY': (31.5785, -84.1557),
-        'APPLING': (31.7252, -82.1912)
-    }
+    """Assign coordinates using the external Georgia locations database"""
+    print("\n📍 Assigning coordinates using comprehensive Georgia location database...")
     
     assigned_coords = 0
     unassigned_coords = 0
     
-    def get_coordinates(row):
+    def get_system_coordinates(row):
         nonlocal assigned_coords, unassigned_coords
         
-        # Try city match first
-        city = str(row['city_served']).upper()
-        if city in georgia_coordinates:
-            assigned_coords += 1
-            return pd.Series([georgia_coordinates[city][0], georgia_coordinates[city][1], True])
+        # Try to get coordinates using the imported function
+        lat, lng, found = get_coordinates(
+            city=row['city_served'],
+            county=row['county_served'],
+            fallback_city=row['CITY_NAME']
+        )
         
-        # Try county match
-        county = str(row['county_served']).upper()
-        if county in georgia_counties:
+        if found:
             assigned_coords += 1
-            return pd.Series([georgia_counties[county][0], georgia_counties[county][1], True])
-        
-        # Use system city name as fallback
-        system_city = str(row['CITY_NAME']).upper()
-        if system_city in georgia_coordinates:
-            assigned_coords += 1
-            return pd.Series([georgia_coordinates[system_city][0], georgia_coordinates[system_city][1], True])
-        
-        # No coordinates found - mark as unknown
-        unassigned_coords += 1
-        return pd.Series([None, None, False])
+            return pd.Series([lat, lng, True])
+        else:
+            unassigned_coords += 1
+            return pd.Series([None, None, False])
     
-    systems_df[['latitude', 'longitude', 'has_coordinates']] = systems_df.apply(get_coordinates, axis=1)
+    systems_df[['latitude', 'longitude', 'has_coordinates']] = systems_df.apply(get_system_coordinates, axis=1)
     
     print(f"   ✅ Assigned known coordinates to {assigned_coords} systems")
     print(f"   ❓ Found {unassigned_coords} systems with unknown coordinates")
+    
+    assignment_rate = (assigned_coords / (assigned_coords + unassigned_coords)) * 100
+    print(f"   📊 Coordinate assignment rate: {assignment_rate:.1f}%")
     
     return systems_df
 
@@ -282,8 +243,8 @@ def create_polished_data(systems_df):
 
 def main():
     """Main processing function"""
-    print("🚰 SDWIS Data Preprocessing Script")
-    print("=" * 50)
+    print("🚰 SDWIS Data Preprocessing Script (Improved Version)")
+    print("=" * 60)
     
     # Configuration
     quarter = '2025Q1'
@@ -326,6 +287,8 @@ def main():
     print(f"   • Total systems processed: {len(polished_df)}")
     print(f"   • Systems with violations: {len(polished_df[polished_df['total_violations'] > 0])}")
     print(f"   • High risk systems: {len(polished_df[polished_df['risk_level'] == 'High'])}")
+    print(f"   • Systems with coordinates: {len(polished_df[polished_df['has_coordinates'] == True])} " + 
+          f"({len(polished_df[polished_df['has_coordinates'] == True]) / len(polished_df) * 100:.1f}%)")
     print(f"   • Average population served: {polished_df['population'].mean():.0f}")
     print(f"   • Output file size: {os.path.getsize(output_file) / 1024:.1f} KB")
     
