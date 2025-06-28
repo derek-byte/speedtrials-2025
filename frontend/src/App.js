@@ -19,6 +19,16 @@ function App() {
     setSelectedSystem(null);
   };
 
+  const handleExportData = () => {
+    const downloadUrl = 'http://localhost:5000/api/export/polished-data';
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = 'georgia_water_systems_data.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
@@ -31,8 +41,14 @@ function App() {
             </div>
             <div className="flex items-center space-x-4">
               <HealthCheck />
-              <button className="px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
-                Export Data
+              <button 
+                onClick={handleExportData}
+                className="px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors flex items-center space-x-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>Export Data</span>
               </button>
             </div>
           </div>

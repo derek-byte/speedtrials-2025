@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
 import pandas as pd
 import os
@@ -159,6 +159,25 @@ def get_unknown_locations():
             "systems": unknown_systems,
             "data_source": "polished_sdwis"
         })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/export/polished-data', methods=['GET'])
+def export_polished_data():
+    """Download the polished_data.csv file"""
+    try:
+        polished_path = os.path.join(DATA_DIR, 'polished_data.csv')
+        
+        if not os.path.exists(polished_path):
+            return jsonify({"error": "polished_data.csv not found. Please run preprocess_data.py first."}), 404
+        
+        return send_file(
+            polished_path,
+            as_attachment=True,
+            download_name='georgia_water_systems_data.csv',
+            mimetype='text/csv'
+        )
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
