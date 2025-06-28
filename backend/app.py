@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import pandas as pd
 import os
+import numpy as np
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -131,8 +132,8 @@ def get_map_data():
                 "data_source": "polished_sdwis"
             })
         
-        # Load processed data from polished_data.csv
-        processed_data = load_polished_data()
+        # Load processed data with coordinates only
+        processed_data = load_systems_with_coordinates()
         
         # Cache the results
         map_data_cache = processed_data
@@ -141,6 +142,21 @@ def get_map_data():
             "total": len(processed_data),
             "systems": processed_data,
             "cached": False,
+            "data_source": "polished_sdwis"
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/unknown-locations', methods=['GET'])
+def get_unknown_locations():
+    """Get systems with unknown coordinates"""
+    try:
+        unknown_systems = load_unknown_location_systems()
+        
+        return jsonify({
+            "total": len(unknown_systems),
+            "systems": unknown_systems,
             "data_source": "polished_sdwis"
         })
         
@@ -159,6 +175,9 @@ def load_polished_data():
         
         df = pd.read_csv(polished_path)
         
+        # Replace NaN values with None for JSON serialization
+        df = df.replace({np.nan: None})
+        
         # Convert to list of dictionaries for JSON serialization
         systems = df.to_dict('records')
         
@@ -168,6 +187,16 @@ def load_polished_data():
     except Exception as e:
         print(f"Error loading polished data: {e}")
         raise e
+
+def load_systems_with_coordinates():
+    """Load only systems with known coordinates"""
+    all_systems = load_polished_data()
+    return [s for s in all_systems if s.get('has_coordinates') == True]
+
+def load_unknown_location_systems():
+    """Load only systems with unknown coordinates"""
+    all_systems = load_polished_data()
+    return [s for s in all_systems if s.get('has_coordinates') == False]
 
 
 

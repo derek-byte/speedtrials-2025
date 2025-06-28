@@ -3,6 +3,7 @@ import './App.css';
 import HealthCheck from './components/HealthCheck';
 import WaterSystemsMap from './components/WaterSystemsMap';
 import DetailsSidebar from './components/DetailsSidebar';
+import UnknownCoordinatesPanel from './components/UnknownCoordinatesPanel';
 
 function App() {
   const [selectedSystem, setSelectedSystem] = useState(null);
@@ -65,6 +66,11 @@ function App() {
           {/* Map */}
           <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
             <WaterSystemsMap onSystemSelect={handleSystemSelect} />
+          </div>
+
+          {/* Unknown Locations Panel */}
+          <div className="mt-6">
+            <UnknownCoordinatesPanel onSystemSelect={handleSystemSelect} />
           </div>
         </div>
 
