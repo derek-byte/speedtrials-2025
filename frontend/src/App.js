@@ -4,6 +4,7 @@ import HealthCheck from './components/HealthCheck';
 import WaterSystemsMap from './components/WaterSystemsMap';
 import DetailsSidebar from './components/DetailsSidebar';
 import UnknownCoordinatesPanel from './components/UnknownCoordinatesPanel';
+import StatsBar from './components/StatsBar';
 
 function App() {
   const [selectedSystem, setSelectedSystem] = useState(null);
@@ -43,7 +44,7 @@ function App() {
               <HealthCheck />
               <button 
                 onClick={handleExportData}
-                className="px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors flex items-center space-x-2"
+                className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 shadow-md text-white transform hover:scale-105 border border-indigo-800/20"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -60,24 +61,7 @@ function App() {
         {/* Map Container */}
         <div className="p-6">
           {/* Stats Bar */}
-          <div className="grid grid-cols-4 gap-4 mb-6">
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-              <div className="text-2xl font-bold text-white">1,247</div>
-              <div className="text-gray-400 text-sm">Water Systems</div>
-            </div>
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-              <div className="text-2xl font-bold text-green-400">94.2%</div>
-              <div className="text-gray-400 text-sm">Compliant</div>
-            </div>
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-              <div className="text-2xl font-bold text-orange-400">72</div>
-              <div className="text-gray-400 text-sm">Active Violations</div>
-            </div>
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-              <div className="text-2xl font-bold text-white">8.9M</div>
-              <div className="text-gray-400 text-sm">Population Served</div>
-            </div>
-          </div>
+          <StatsBar />
 
           {/* Map */}
           <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
