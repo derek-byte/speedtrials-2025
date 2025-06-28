@@ -1,37 +1,80 @@
+import React, { useState } from 'react';
 import './App.css';
 import HealthCheck from './components/HealthCheck';
-import WaterSystemsList from './components/WaterSystemsList';
 import WaterSystemsMap from './components/WaterSystemsMap';
+import DetailsSidebar from './components/DetailsSidebar';
 
 function App() {
+  const [selectedSystem, setSelectedSystem] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleSystemSelect = (system) => {
+    setSelectedSystem(system);
+    setSidebarOpen(true);
+  };
+
+  const handleCloseSidebar = () => {
+    setSidebarOpen(false);
+    setSelectedSystem(null);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-blue-600 text-white p-6">
-        <h1 className="text-3xl font-bold">Georgia Water Quality Dashboard</h1>
-        <p className="mt-2 text-blue-100">Making water quality data accessible to everyone</p>
+    <div className="min-h-screen bg-black text-white">
+      {/* Header */}
+      <header className="border-b border-gray-800 bg-black/95 backdrop-blur-sm sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight">Georgia Water Quality</h1>
+              <p className="text-gray-400 text-sm mt-1">Real-time monitoring and analysis</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <HealthCheck />
+              <button className="px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+                Export Data
+              </button>
+            </div>
+          </div>
+        </div>
       </header>
-      
-      <main className="container mx-auto px-4 py-8">
-        <HealthCheck />
-        
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-2xl font-semibold mb-4">Welcome to the Water Quality Portal</h2>
-          <p className="text-gray-600 mb-4">
-            This platform provides access to Georgia's drinking water quality data in an easy-to-understand format.
-          </p>
-          <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
-            <p className="text-blue-700">
-              <strong>Live Data:</strong> Connected to real Georgia water quality datasets with interactive mapping.
-            </p>
+
+      {/* Main Content */}
+      <div className="relative">
+        {/* Map Container */}
+        <div className="p-6">
+          {/* Stats Bar */}
+          <div className="grid grid-cols-4 gap-4 mb-6">
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+              <div className="text-2xl font-bold text-white">1,247</div>
+              <div className="text-gray-400 text-sm">Water Systems</div>
+            </div>
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+              <div className="text-2xl font-bold text-green-400">94.2%</div>
+              <div className="text-gray-400 text-sm">Compliant</div>
+            </div>
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+              <div className="text-2xl font-bold text-orange-400">72</div>
+              <div className="text-gray-400 text-sm">Active Violations</div>
+            </div>
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+              <div className="text-2xl font-bold text-white">8.9M</div>
+              <div className="text-gray-400 text-sm">Population Served</div>
+            </div>
+          </div>
+
+          {/* Map */}
+          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+            <WaterSystemsMap onSystemSelect={handleSystemSelect} />
           </div>
         </div>
 
-        <div className="mb-6">
-          <WaterSystemsMap />
-        </div>
-
-        <WaterSystemsList />
-      </main>
+        {/* Sidebar - Fixed positioning to overlay */}
+        <DetailsSidebar 
+          isOpen={sidebarOpen}
+          system={selectedSystem}
+          onClose={handleCloseSidebar}
+        />
+      </div>
     </div>
   );
 }
