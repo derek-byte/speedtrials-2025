@@ -133,7 +133,7 @@ def assign_coordinates(systems_df):
         'SAVANNAH': (32.0835, -81.0998),
         'ATHENS': (33.9519, -83.3576),
         'MACON': (32.8407, -83.6324),
-        'ALBANY': (31.5785, -84.1557),
+        'ALBANY': (31.5785, -84.1557),  
         'ROSWELL': (34.0232, -84.3616),
         'SANDY SPRINGS': (33.9304, -84.3733),
         'WARNER ROBINS': (32.6130, -83.6241),
@@ -176,32 +176,28 @@ def assign_coordinates(systems_df):
         city = str(row['city_served']).upper()
         if city in georgia_coordinates:
             assigned_coords += 1
-            return pd.Series(georgia_coordinates[city])
+            return pd.Series([georgia_coordinates[city][0], georgia_coordinates[city][1], True])
         
         # Try county match
         county = str(row['county_served']).upper()
         if county in georgia_counties:
             assigned_coords += 1
-            return pd.Series(georgia_counties[county])
+            return pd.Series([georgia_counties[county][0], georgia_counties[county][1], True])
         
         # Use system city name as fallback
         system_city = str(row['CITY_NAME']).upper()
         if system_city in georgia_coordinates:
             assigned_coords += 1
-            return pd.Series(georgia_coordinates[system_city])
+            return pd.Series([georgia_coordinates[system_city][0], georgia_coordinates[system_city][1], True])
         
-        # Random coordinates in Georgia for unmapped locations
-        import random
-        base_lat, base_lng = 32.6415, -83.4426  # Geographic center of Georgia
-        lat = base_lat + (random.random() - 0.5) * 2  # ±1 degree variation
-        lng = base_lng + (random.random() - 0.5) * 3  # ±1.5 degree variation
+        # No coordinates found - mark as unknown
         unassigned_coords += 1
-        return pd.Series([lat, lng])
+        return pd.Series([None, None, False])
     
-    systems_df[['latitude', 'longitude']] = systems_df.apply(get_coordinates, axis=1)
+    systems_df[['latitude', 'longitude', 'has_coordinates']] = systems_df.apply(get_coordinates, axis=1)
     
     print(f"   ✅ Assigned known coordinates to {assigned_coords} systems")
-    print(f"   🎲 Generated random coordinates for {unassigned_coords} systems")
+    print(f"   ❓ Found {unassigned_coords} systems with unknown coordinates")
     
     return systems_df
 
@@ -254,14 +250,14 @@ def create_polished_data(systems_df):
         'PWSID', 'PWS_NAME', 'PWS_TYPE_CODE', 'POPULATION_SERVED_COUNT',
         'OWNER_TYPE_CODE', 'PRIMARY_SOURCE_CODE', 'address', 'latitude', 'longitude',
         'total_violations', 'health_violations', 'unaddressed_violations',
-        'risk_level', 'marker_color'
+        'risk_level', 'marker_color', 'has_coordinates'
     ]].copy()
     
     # Rename columns to clean names
     polished.columns = [
         'pwsid', 'name', 'type', 'population', 'owner_type', 'primary_source',
         'address', 'lat', 'lng', 'total_violations', 'health_violations',
-        'unaddressed_violations', 'risk_level', 'marker_color'
+        'unaddressed_violations', 'risk_level', 'marker_color', 'has_coordinates'
     ]
     
     # Ensure data types
@@ -269,10 +265,18 @@ def create_polished_data(systems_df):
     polished['total_violations'] = polished['total_violations'].astype(int)
     polished['health_violations'] = polished['health_violations'].astype(int)
     polished['unaddressed_violations'] = polished['unaddressed_violations'].astype(int)
-    polished['lat'] = polished['lat'].astype(float)
-    polished['lng'] = polished['lng'].astype(float)
+    polished['has_coordinates'] = polished['has_coordinates'].astype(bool)
+    
+    # Handle lat/lng - only convert to float if not null
+    polished['lat'] = pd.to_numeric(polished['lat'], errors='coerce')
+    polished['lng'] = pd.to_numeric(polished['lng'], errors='coerce')
+    
+    systems_with_coords = len(polished[polished['has_coordinates'] == True])
+    systems_without_coords = len(polished[polished['has_coordinates'] == False])
     
     print(f"   ✅ Created polished dataset with {len(polished)} systems")
+    print(f"   📍 {systems_with_coords} systems have coordinates (will show on map)")
+    print(f"   ❓ {systems_without_coords} systems have unknown coordinates")
     
     return polished
 
