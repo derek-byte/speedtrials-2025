@@ -1,6 +1,7 @@
 import './App.css';
 import HealthCheck from './components/HealthCheck';
 import WaterSystemsList from './components/WaterSystemsList';
+import WaterSystemsMap from './components/WaterSystemsMap';
 
 function App() {
   return (
@@ -20,9 +21,13 @@ function App() {
           </p>
           <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
             <p className="text-blue-700">
-              <strong>Live Data:</strong> Connected to real Georgia water quality datasets.
+              <strong>Live Data:</strong> Connected to real Georgia water quality datasets with interactive mapping.
             </p>
           </div>
+        </div>
+
+        <div className="mb-6">
+          <WaterSystemsMap />
         </div>
 
         <WaterSystemsList />
