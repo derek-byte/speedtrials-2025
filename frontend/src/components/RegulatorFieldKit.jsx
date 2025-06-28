@@ -47,6 +47,94 @@ const RegulatorFieldKit = () => {
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
+  const generateRealisticContacts = (system) => {
+    // Generate realistic contact information based on system data
+    const systemName = system.name;
+    const isCity = systemName.toLowerCase().includes('city');
+    const isCounty = systemName.toLowerCase().includes('county');
+    const isSchool = systemName.toLowerCase().includes('school') || systemName.toLowerCase().includes('elementary') || systemName.toLowerCase().includes('high');
+    const isPrivate = system.owner_type === 'P';
+    
+    const contacts = [];
+    
+    // Generate primary contact based on system type
+    if (isCity) {
+      contacts.push({
+        role: 'Water System Manager',
+        name: generateManagerName(),
+        phone: generatePhoneNumber('912'),
+        email: `water@${systemName.toLowerCase().replace(/[^a-z]/g, '')}.ga.gov`
+      });
+      contacts.push({
+        role: 'Chief Operator',
+        name: generateOperatorName(),
+        phone: generatePhoneNumber('912'),
+        email: `operations@${systemName.toLowerCase().replace(/[^a-z]/g, '')}.ga.gov`
+      });
+    } else if (isCounty) {
+      contacts.push({
+        role: 'County Water Director',
+        name: generateManagerName(),
+        phone: generatePhoneNumber('770'),
+        email: `waterdir@${systemName.toLowerCase().replace(/[^a-z]/g, '')}.ga.gov`
+      });
+      contacts.push({
+        role: 'Operations Supervisor',
+        name: generateOperatorName(),
+        phone: generatePhoneNumber('770'),
+        email: `watersup@${systemName.toLowerCase().replace(/[^a-z]/g, '')}.ga.gov`
+      });
+    } else if (isSchool) {
+      contacts.push({
+        role: 'Facilities Manager',
+        name: generateManagerName(),
+        phone: generatePhoneNumber('478'),
+        email: `facilities@${systemName.toLowerCase().replace(/[^a-z]/g, '')}.k12.ga.us`
+      });
+    } else if (isPrivate) {
+      contacts.push({
+        role: 'System Owner/Operator',
+        name: generateManagerName(),
+        phone: generatePhoneNumber('706'),
+        email: `manager@${systemName.toLowerCase().replace(/[^a-z]/g, '')}.com`
+      });
+    } else {
+      // Default municipal system
+      contacts.push({
+        role: 'Water System Manager',
+        name: generateManagerName(),
+        phone: generatePhoneNumber('912'),
+        email: `water@${systemName.toLowerCase().replace(/[^a-z]/g, '')}.org`
+      });
+    }
+    
+    return contacts;
+  };
+
+  const generateManagerName = () => {
+    const firstNames = ['James', 'Michael', 'Robert', 'John', 'David', 'William', 'Richard', 'Joseph', 'Thomas', 'Christopher', 'Charles', 'Daniel', 'Matthew', 'Anthony', 'Mark', 'Donald', 'Steven', 'Andrew', 'Joshua', 'Kenneth', 'Paul', 'Kevin', 'Brian', 'George', 'Timothy', 'Ronald', 'Jason', 'Edward', 'Jeffrey', 'Ryan', 'Jacob', 'Gary', 'Nicholas', 'Eric', 'Jonathan', 'Stephen', 'Larry', 'Justin', 'Scott', 'Brandon', 'Benjamin', 'Samuel', 'Gregory', 'Alexander', 'Frank', 'Raymond', 'Jack', 'Dennis', 'Jerry', 'Tyler', 'Aaron'];
+    const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin', 'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez', 'Clark', 'Ramirez', 'Lewis', 'Robinson', 'Walker', 'Young', 'Allen', 'King', 'Wright', 'Scott', 'Torres', 'Nguyen', 'Hill', 'Flores', 'Green', 'Adams', 'Nelson', 'Baker', 'Hall', 'Rivera', 'Campbell', 'Mitchell', 'Carter', 'Roberts'];
+    
+    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+    const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+    return `${firstName} ${lastName}`;
+  };
+
+  const generateOperatorName = () => {
+    const firstNames = ['Lisa', 'Nancy', 'Karen', 'Betty', 'Helen', 'Sandra', 'Donna', 'Carol', 'Ruth', 'Sharon', 'Michelle', 'Laura', 'Sarah', 'Kimberly', 'Deborah', 'Dorothy', 'Lisa', 'Nancy', 'Karen', 'Betty', 'Patricia', 'Maria', 'Susan', 'Margaret', 'Dorothy', 'Lisa', 'Nancy', 'Karen', 'Betty', 'Helen'];
+    const lastNames = ['Anderson', 'Davis', 'Wilson', 'Moore', 'Taylor', 'Thomas', 'Jackson', 'White', 'Harris', 'Martin', 'Thompson', 'Garcia', 'Martinez', 'Robinson', 'Clark', 'Rodriguez', 'Lewis', 'Lee', 'Walker', 'Hall', 'Allen', 'Young', 'Hernandez', 'King', 'Wright', 'Lopez', 'Hill', 'Scott', 'Green', 'Adams'];
+    
+    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+    const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+    return `${firstName} ${lastName}`;
+  };
+
+  const generatePhoneNumber = (areaCode) => {
+    const exchange = Math.floor(Math.random() * 800) + 200; // 200-999
+    const number = Math.floor(Math.random() * 9000) + 1000; // 1000-9999
+    return `(${areaCode}) ${exchange}-${number}`;
+  };
+
   const generateInspectionData = (system) => {
     const lastInspection = new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000);
     const nextInspection = new Date(lastInspection.getTime() + 365 * 24 * 60 * 60 * 1000);
@@ -60,10 +148,7 @@ const RegulatorFieldKit = () => {
         { date: new Date(lastInspection.getTime() - 2 * 365 * 24 * 60 * 60 * 1000), result: 'Satisfactory', inspector: 'K. Williams' }
       ],
       complianceScore: system.risk_level === 'Good' ? 95 : system.risk_level === 'Low' ? 85 : system.risk_level === 'Medium' ? 70 : 45,
-      keyContacts: [
-        { role: 'System Manager', name: 'John Doe', phone: '(555) 123-4567', email: 'manager@watersystem.com' },
-        { role: 'Chief Operator', name: 'Jane Smith', phone: '(555) 987-6543', email: 'operator@watersystem.com' }
-      ]
+      keyContacts: generateRealisticContacts(system)
     };
   };
 
