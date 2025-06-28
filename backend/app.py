@@ -45,18 +45,21 @@ def get_water_system_stats():
     try:
         systems = load_polished_data()
         
-        # Calculate statistics from polished data
+        # Calculate statistics from polished data (active systems only)
         total_pop = sum(s['population'] for s in systems)
         systems_by_type = {}
         systems_by_risk = {}
-        violations_total = sum(s['total_violations'] for s in systems)
+        
+        # Use current_violations (unaddressed) for compliance calculations
+        current_violations_total = sum(s.get('current_violations', s.get('unaddressed_violations', 0)) for s in systems)
+        systems_with_current_violations = len([s for s in systems if s.get('current_violations', s.get('unaddressed_violations', 0)) > 0])
         
         for system in systems:
             # Count by type
             sys_type = system['type']
             systems_by_type[sys_type] = systems_by_type.get(sys_type, 0) + 1
             
-            # Count by risk level
+            # Count by risk level (recalculated based on current violations)
             risk = system['risk_level']
             systems_by_risk[risk] = systems_by_risk.get(risk, 0) + 1
         
@@ -66,9 +69,10 @@ def get_water_system_stats():
             "systems_by_risk": systems_by_risk,
             "population_served": total_pop,
             "avg_population_per_system": round(total_pop / len(systems)) if systems else 0,
-            "total_violations": violations_total,
-            "systems_with_violations": len([s for s in systems if s['total_violations'] > 0]),
-            "data_source": "polished_sdwis"
+            "total_violations": current_violations_total,  # Using current violations only
+            "systems_with_violations": systems_with_current_violations,  # Using current violations only
+            "compliance_note": "Statistics based on active systems and current (unaddressed) violations only",
+            "data_source": "polished_sdwis_active_only"
         }
         
         return jsonify(stats)
@@ -163,6 +167,48 @@ def get_unknown_locations():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/stats/comprehensive', methods=['GET'])
+def get_comprehensive_stats():
+    """Get comprehensive statistics including inactive systems and archived data"""
+    try:
+        # Load all data (including inactive systems)
+        polished_path = os.path.join(DATA_DIR, 'polished_data.csv')
+        if not os.path.exists(polished_path):
+            raise Exception("polished_data.csv not found.")
+        
+        df = pd.read_csv(polished_path)
+        df = df.replace({np.nan: None})
+        
+        # Separate active and inactive systems
+        active_systems = df[df['is_active'] == True]
+        inactive_systems = df[df['is_active'] == False]
+        
+        # Calculate comprehensive statistics
+        stats = {
+            "active_systems": {
+                "count": len(active_systems),
+                "with_current_violations": len(active_systems[active_systems['unaddressed_violations'] > 0]),
+                "with_archived_violations": len(active_systems[active_systems['archived_violations'] > 0]),
+                "population_served": int(active_systems['population'].sum())
+            },
+            "inactive_systems": {
+                "count": len(inactive_systems),
+                "total_violations": int(inactive_systems['total_violations'].sum()),
+                "archived_violations": int(inactive_systems['archived_violations'].sum())
+            },
+            "compliance_summary": {
+                "total_active_systems": len(active_systems),
+                "compliant_systems": len(active_systems[active_systems['unaddressed_violations'] == 0]),
+                "compliance_rate": round((len(active_systems[active_systems['unaddressed_violations'] == 0]) / len(active_systems)) * 100, 1) if len(active_systems) > 0 else 0,
+                "systems_with_resolved_issues": len(active_systems[active_systems['archived_violations'] > 0])
+            },
+            "data_source": "comprehensive_polished_data"
+        }
+        
+        return jsonify(stats)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/export/polished-data', methods=['GET'])
 def export_polished_data():
     """Download the polished_data.csv file"""
@@ -185,7 +231,7 @@ def export_polished_data():
 
 
 def load_polished_data():
-    """Load preprocessed data from polished_data.csv"""
+    """Load preprocessed data from polished_data.csv, filtering for active systems only"""
     try:
         polished_path = os.path.join(DATA_DIR, 'polished_data.csv')
         
@@ -194,13 +240,44 @@ def load_polished_data():
         
         df = pd.read_csv(polished_path)
         
+        # Filter for active systems only
+        df = df[df['is_active'] == True].copy()
+        
+        # Calculate adjusted violations (exclude archived/resolved violations from current counts)
+        # For compliance purposes, only count unaddressed violations as "active" violations
+        df['current_violations'] = df['unaddressed_violations']
+        df['resolved_violations'] = df['archived_violations']
+        
+        # Recalculate risk level based on current (unaddressed) violations only
+        def recalculate_risk(row):
+            health_violations = row['health_violations']
+            current_violations = row['current_violations']
+            
+            # Only count health violations that are still unaddressed
+            active_health_violations = min(health_violations, current_violations)
+            
+            if active_health_violations > 0:
+                return 'High', 'red'
+            elif current_violations > 0:
+                return 'Medium', 'orange'
+            elif row['total_violations'] > row['current_violations']:
+                # Has resolved violations but no current violations
+                return 'Good', 'green'
+            else:
+                return 'Good', 'green'
+        
+        # Apply the recalculated risk levels
+        risk_data = df.apply(lambda row: pd.Series(recalculate_risk(row)), axis=1)
+        df['risk_level'] = risk_data[0]
+        df['marker_color'] = risk_data[1]
+        
         # Replace NaN values with None for JSON serialization
         df = df.replace({np.nan: None})
         
         # Convert to list of dictionaries for JSON serialization
         systems = df.to_dict('records')
         
-        print(f"Loaded {len(systems)} systems from polished_data.csv")
+        print(f"Loaded {len(systems)} active systems from polished_data.csv")
         return systems
         
     except Exception as e:

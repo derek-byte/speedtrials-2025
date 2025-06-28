@@ -31,23 +31,36 @@ def load_csv_safe(filepath):
         return None
 
 def process_water_systems(df, quarter='2025Q1'):
-    """Process core water systems data"""
+    """Process core water systems data including active and inactive systems"""
     print(f"\n📊 Processing water systems for {quarter}...")
     
-    # Filter for Georgia and specified quarter
+    # Filter for Georgia and specified quarter (include both active and inactive)
     filtered = df[
         (df['SUBMISSIONYEARQUARTER'] == quarter) & 
-        (df['STATE_CODE'] == 'GA') &
-        (df['PWS_ACTIVITY_CODE'] == 'A')  # Active systems only
+        (df['STATE_CODE'] == 'GA')
     ].copy()
     
-    print(f"   Found {len(filtered)} active Georgia water systems")
+    # Check system activity status
+    active_systems = filtered[filtered['PWS_ACTIVITY_CODE'] == 'A'].copy()
+    inactive_systems = filtered[filtered['PWS_ACTIVITY_CODE'] != 'A'].copy()
     
-    # Select and rename relevant columns
+    print(f"   Found {len(active_systems)} active Georgia water systems")
+    print(f"   Found {len(inactive_systems)} inactive Georgia water systems")
+    
+    # Process all systems (active and inactive)
     systems = filtered[[
         'PWSID', 'PWS_NAME', 'PWS_TYPE_CODE', 'POPULATION_SERVED_COUNT',
-        'OWNER_TYPE_CODE', 'PRIMARY_SOURCE_CODE', 'CITY_NAME', 'STATE_CODE'
+        'OWNER_TYPE_CODE', 'PRIMARY_SOURCE_CODE', 'CITY_NAME', 'STATE_CODE', 'PWS_ACTIVITY_CODE'
     ]].copy()
+    
+    # Add activity status field
+    systems['is_active'] = systems['PWS_ACTIVITY_CODE'] == 'A'
+    systems['activity_status'] = systems['PWS_ACTIVITY_CODE'].map({
+        'A': 'Active',
+        'I': 'Inactive',
+        'C': 'Closed',
+        'T': 'Transferred'
+    }).fillna('Unknown')
     
     # Clean data
     systems['POPULATION_SERVED_COUNT'] = pd.to_numeric(systems['POPULATION_SERVED_COUNT'], errors='coerce').fillna(0)
@@ -92,7 +105,7 @@ def add_geographic_data(systems_df, geo_df, quarter='2025Q1'):
     return systems_df
 
 def add_violations_data(systems_df, violations_df, quarter='2025Q1'):
-    """Add violations summary from SDWA_VIOLATIONS_ENFORCEMENT"""
+    """Add violations summary from SDWA_VIOLATIONS_ENFORCEMENT including archived reports"""
     print("\n⚠️  Processing violations data...")
     
     if violations_df is None:
@@ -100,31 +113,46 @@ def add_violations_data(systems_df, violations_df, quarter='2025Q1'):
         systems_df['total_violations'] = 0
         systems_df['health_violations'] = 0
         systems_df['unaddressed_violations'] = 0
+        systems_df['archived_violations'] = 0
+        systems_df['has_archived_reports'] = False
         return systems_df
     
     # Filter violations for the quarter
     viol_filtered = violations_df[violations_df['SUBMISSIONYEARQUARTER'] == quarter]
     
-    # Calculate violation statistics per system
+    # Calculate violation statistics per system including archived data
     viol_stats = viol_filtered.groupby('PWSID').agg({
         'VIOLATION_ID': 'count',
         'IS_HEALTH_BASED_IND': lambda x: (x == 'Y').sum(),
-        'VIOLATION_STATUS': lambda x: (x.isin(['Open', 'Unaddressed'])).sum()
-    }).rename(columns={
-        'VIOLATION_ID': 'total_violations',
-        'IS_HEALTH_BASED_IND': 'health_violations',
-        'VIOLATION_STATUS': 'unaddressed_violations'
-    }).reset_index()
+        'VIOLATION_STATUS': lambda x: (x.isin(['Open', 'Unaddressed'])).sum(),
+        # Check for archived/resolved violations
+        'VIOLATION_STATUS': [
+            lambda x: (x.isin(['Open', 'Unaddressed'])).sum(),
+            lambda x: (x.isin(['Resolved', 'Closed', 'Archived', 'Corrected'])).sum()
+        ]
+    })
+    
+    # Flatten multi-level column names
+    viol_stats.columns = [
+        'total_violations', 'health_violations', 'unaddressed_violations', 'archived_violations'
+    ]
+    viol_stats = viol_stats.reset_index()
+    
+    # Add flag for systems with archived reports
+    viol_stats['has_archived_reports'] = viol_stats['archived_violations'] > 0
     
     # Merge violations data
     systems_df = systems_df.merge(viol_stats, on='PWSID', how='left')
     
-    # Fill NaN values with 0
-    systems_df[['total_violations', 'health_violations', 'unaddressed_violations']] = \
-        systems_df[['total_violations', 'health_violations', 'unaddressed_violations']].fillna(0).astype(int)
+    # Fill NaN values with 0/False
+    systems_df[['total_violations', 'health_violations', 'unaddressed_violations', 'archived_violations']] = \
+        systems_df[['total_violations', 'health_violations', 'unaddressed_violations', 'archived_violations']].fillna(0).astype(int)
+    systems_df['has_archived_reports'] = systems_df['has_archived_reports'].fillna(False).astype(bool)
     
     violation_count = len(systems_df[systems_df['total_violations'] > 0])
+    archived_count = len(systems_df[systems_df['has_archived_reports'] == True])
     print(f"   ✅ Found violations for {violation_count} systems")
+    print(f"   📁 Found archived violation reports for {archived_count} systems")
     
     return systems_df
 
@@ -206,19 +234,20 @@ def create_polished_data(systems_df):
     
     systems_df['address'] = systems_df.apply(build_address, axis=1)
     
-    # Select final columns for polished dataset
+    # Select final columns for polished dataset (including new fields)
     polished = systems_df[[
         'PWSID', 'PWS_NAME', 'PWS_TYPE_CODE', 'POPULATION_SERVED_COUNT',
         'OWNER_TYPE_CODE', 'PRIMARY_SOURCE_CODE', 'address', 'latitude', 'longitude',
-        'total_violations', 'health_violations', 'unaddressed_violations',
-        'risk_level', 'marker_color', 'has_coordinates'
+        'total_violations', 'health_violations', 'unaddressed_violations', 'archived_violations',
+        'risk_level', 'marker_color', 'has_coordinates', 'is_active', 'activity_status', 'has_archived_reports'
     ]].copy()
     
     # Rename columns to clean names
     polished.columns = [
         'pwsid', 'name', 'type', 'population', 'owner_type', 'primary_source',
         'address', 'lat', 'lng', 'total_violations', 'health_violations',
-        'unaddressed_violations', 'risk_level', 'marker_color', 'has_coordinates'
+        'unaddressed_violations', 'archived_violations', 'risk_level', 'marker_color', 
+        'has_coordinates', 'is_active', 'activity_status', 'has_archived_reports'
     ]
     
     # Ensure data types
@@ -226,18 +255,28 @@ def create_polished_data(systems_df):
     polished['total_violations'] = polished['total_violations'].astype(int)
     polished['health_violations'] = polished['health_violations'].astype(int)
     polished['unaddressed_violations'] = polished['unaddressed_violations'].astype(int)
+    polished['archived_violations'] = polished['archived_violations'].astype(int)
     polished['has_coordinates'] = polished['has_coordinates'].astype(bool)
+    polished['is_active'] = polished['is_active'].astype(bool)
+    polished['has_archived_reports'] = polished['has_archived_reports'].astype(bool)
     
     # Handle lat/lng - only convert to float if not null
     polished['lat'] = pd.to_numeric(polished['lat'], errors='coerce')
     polished['lng'] = pd.to_numeric(polished['lng'], errors='coerce')
     
+    # Statistics
     systems_with_coords = len(polished[polished['has_coordinates'] == True])
     systems_without_coords = len(polished[polished['has_coordinates'] == False])
+    active_systems = len(polished[polished['is_active'] == True])
+    inactive_systems = len(polished[polished['is_active'] == False])
+    systems_with_archived = len(polished[polished['has_archived_reports'] == True])
     
     print(f"   ✅ Created polished dataset with {len(polished)} systems")
     print(f"   📍 {systems_with_coords} systems have coordinates (will show on map)")
     print(f"   ❓ {systems_without_coords} systems have unknown coordinates")
+    print(f"   🟢 {active_systems} active systems")
+    print(f"   🔴 {inactive_systems} inactive systems")
+    print(f"   📁 {systems_with_archived} systems have archived violation reports")
     
     return polished
 
@@ -285,7 +324,10 @@ def main():
     # Summary
     print(f"\n📊 Processing Summary:")
     print(f"   • Total systems processed: {len(polished_df)}")
+    print(f"   • Active systems: {len(polished_df[polished_df['is_active'] == True])}")
+    print(f"   • Inactive systems: {len(polished_df[polished_df['is_active'] == False])}")
     print(f"   • Systems with violations: {len(polished_df[polished_df['total_violations'] > 0])}")
+    print(f"   • Systems with archived reports: {len(polished_df[polished_df['has_archived_reports'] == True])}")
     print(f"   • High risk systems: {len(polished_df[polished_df['risk_level'] == 'High'])}")
     print(f"   • Systems with coordinates: {len(polished_df[polished_df['has_coordinates'] == True])} " + 
           f"({len(polished_df[polished_df['has_coordinates'] == True]) / len(polished_df) * 100:.1f}%)")
