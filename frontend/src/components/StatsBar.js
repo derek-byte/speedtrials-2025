@@ -61,19 +61,51 @@ const StatsBar = () => {
 
   return (
     <div className="grid grid-cols-4 gap-4 mb-6">
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+      <div 
+        style={{
+          backgroundColor: '#111827',
+          border: '1px solid #1f2937',
+          borderRadius: '0.75rem',
+          padding: '1rem',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+        }}
+      >
         <div className="text-2xl font-bold text-white">{stats?.total_systems?.toLocaleString()}</div>
         <div className="text-gray-400 text-sm">Water Systems</div>
       </div>
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+      <div 
+        style={{
+          backgroundColor: '#111827',
+          border: '1px solid #1f2937',
+          borderRadius: '0.75rem',
+          padding: '1rem',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+        }}
+      >
         <div className="text-2xl font-bold text-green-400">{getCompliancePercentage()}%</div>
         <div className="text-gray-400 text-sm">Compliant</div>
       </div>
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+      <div 
+        style={{
+          backgroundColor: '#111827',
+          border: '1px solid #1f2937',
+          borderRadius: '0.75rem',
+          padding: '1rem',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+        }}
+      >
         <div className="text-2xl font-bold text-orange-400">{stats?.systems_with_violations?.toLocaleString()}</div>
         <div className="text-gray-400 text-sm">Systems with Violations</div>
       </div>
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+      <div 
+        style={{
+          backgroundColor: '#111827',
+          border: '1px solid #1f2937',
+          borderRadius: '0.75rem',
+          padding: '1rem',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+        }}
+      >
         <div className="text-2xl font-bold text-white">{formatNumber(stats?.population_served)}</div>
         <div className="text-gray-400 text-sm">Population Served</div>
       </div>

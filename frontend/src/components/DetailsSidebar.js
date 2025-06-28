@@ -1,6 +1,6 @@
 import React from 'react';
 
-const DetailsSidebar = ({ isOpen, system, onClose }) => {
+const DetailsSidebar = ({ isOpen, system, onClose, onViewFullReport }) => {
   if (!system) {
     return null;
   }
@@ -95,11 +95,11 @@ const DetailsSidebar = ({ isOpen, system, onClose }) => {
         <div className="flex items-center justify-between p-6 border-b border-gray-800">
           <h2 className="text-lg font-semibold text-white">System Details</h2>
           <button 
-            onClick={onClose}
-            className="bg-transparent border-none p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400"
+            className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400" 
+            style={{ background: "none", outline: "none", border: "none" }}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
         </div>
@@ -415,6 +415,7 @@ const DetailsSidebar = ({ isOpen, system, onClose }) => {
                 marginBottom: '12px',
                 transition: 'background-color 200ms ease'
               }}
+              onClick={() => onViewFullReport && onViewFullReport(system)}
               onMouseEnter={(e) => e.target.style.backgroundColor = '#f3f4f6'}
               onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
             >

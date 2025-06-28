@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import './App.css';
 import HealthCheck from './components/HealthCheck';
 import WaterSystemsMap from './components/WaterSystemsMap';
 import DetailsSidebar from './components/DetailsSidebar';
 import UnknownCoordinatesPanel from './components/UnknownCoordinatesPanel';
 import StatsBar from './components/StatsBar';
+import ViolationsReport from './components/ViolationsReport';
 
-function App() {
+// Dashboard Component
+const Dashboard = () => {
   const [selectedSystem, setSelectedSystem] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleSystemSelect = (system) => {
     setSelectedSystem(system);
@@ -18,6 +22,12 @@ function App() {
   const handleCloseSidebar = () => {
     setSidebarOpen(false);
     setSelectedSystem(null);
+  };
+
+  const handleViewFullReport = (system) => {
+    // Navigate to violations report with system data
+    navigate('/violations-report', { state: { system } });
+    setSidebarOpen(false);
   };
 
   const handleExportData = () => {
@@ -77,9 +87,46 @@ function App() {
           isOpen={sidebarOpen}
           system={selectedSystem}
           onClose={handleCloseSidebar}
+          onViewFullReport={handleViewFullReport}
         />
       </div>
     </div>
+  );
+};
+
+// Violations Report Page Component
+const ViolationsReportPage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const system = location.state?.system;
+
+  const handleBackToDashboard = () => {
+    window.location.href = '/';
+  };
+
+  if (!system) {
+    // If no system data, redirect to dashboard
+    navigate('/');
+    return null;
+  }
+
+  return (
+    <ViolationsReport 
+      system={system}
+      onBack={handleBackToDashboard}
+    />
+  );
+};
+
+// Main App Component
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/violations-report" element={<ViolationsReportPage />} />
+      </Routes>
+    </Router>
   );
 }
 
