@@ -46,9 +46,18 @@ const Dashboard = () => {
       <header className="border-b border-gray-800 bg-black/95 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">Georgia Water Quality</h1>
-              <p className="text-gray-400 text-sm mt-1">Real-time monitoring and analysis</p>
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                  <circle cx="12" cy="9" r="1.5" fill="white"/>
+                  <path d="M12 15.5c-2.5 0-4.5 1-4.5 2.25V19h9v-1.25c0-1.25-2-2.25-4.5-2.25z" opacity="0.7"/>
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight">AquaWatch Georgia</h1>
+                <p className="text-gray-400 text-sm mt-1">Water Quality Monitoring Dashboard</p>
+              </div>
             </div>
             <div className="flex items-center space-x-4">
               <HealthCheck />
