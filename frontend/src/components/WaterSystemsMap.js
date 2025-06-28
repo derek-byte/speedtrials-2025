@@ -20,27 +20,25 @@ const WaterSystemsMap = () => {
   const [map, setMap] = useState(null);
 
   useEffect(() => {
-    const fetchWaterSystems = async () => {
+    const fetchMapData = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/water-systems?limit=100');
-        // Filter systems with coordinate data and add mock coordinates for demo
-        const systemsWithCoords = response.data.systems.map((system, index) => ({
-          ...system,
-          // Mock coordinates around Georgia for demo - in real app you'd geocode addresses
-          lat: 33.7490 + (Math.random() - 0.5) * 3,
-          lng: -84.3880 + (Math.random() - 0.5) * 4,
-          id: system.PWSID || index
-        })).filter(system => system.PWS_NAME); // Only show systems with names
+        // Use the new SDWIS pipeline endpoint
+        const response = await axios.get('http://localhost:5000/api/map-data');
         
-        setSystems(systemsWithCoords);
+        const systemsData = response.data.systems.map(system => ({
+          ...system,
+          id: system.pwsid || system.id
+        }));
+        
+        setSystems(systemsData);
         setLoading(false);
       } catch (err) {
-        setError('Failed to fetch water systems data');
+        setError('Failed to fetch map data');
         setLoading(false);
       }
     };
 
-    fetchWaterSystems();
+    fetchMapData();
   }, []);
 
   const onLoad = useCallback((map) => {
@@ -77,12 +75,13 @@ const WaterSystemsMap = () => {
           onLoad={onLoad}
           onUnmount={onUnmount}
         >
-          {systems.slice(0, 50).map((system) => (
+          {systems.map((system) => (
             <Marker
               key={system.id}
               position={{ lat: system.lat, lng: system.lng }}
               onClick={() => handleMarkerClick(system)}
-              title={system.PWS_NAME}
+              title={system.name}
+              icon={`http://maps.google.com/mapfiles/ms/icons/${system.marker_color}-dot.png`}
             />
           ))}
           
@@ -91,14 +90,28 @@ const WaterSystemsMap = () => {
               position={{ lat: selectedSystem.lat, lng: selectedSystem.lng }}
               onCloseClick={handleInfoWindowClose}
             >
-              <div className="p-2">
-                <h4 className="font-semibold text-lg mb-2">{selectedSystem.PWS_NAME}</h4>
+              <div className="p-3">
+                <h4 className="font-semibold text-lg mb-2">{selectedSystem.name}</h4>
                 <div className="space-y-1 text-sm">
-                  <p><strong>PWS ID:</strong> {selectedSystem.PWSID}</p>
-                  <p><strong>City:</strong> {selectedSystem.CITY_NAME || 'N/A'}</p>
-                  <p><strong>County:</strong> {selectedSystem.COUNTY_SERVED || 'N/A'}</p>
-                  <p><strong>Population:</strong> {selectedSystem.POPULATION_SERVED_COUNT || 'N/A'}</p>
-                  <p><strong>System Type:</strong> {selectedSystem.PWS_TYPE_CODE || 'N/A'}</p>
+                  <p><strong>PWS ID:</strong> {selectedSystem.pwsid}</p>
+                  <p><strong>Location:</strong> {selectedSystem.address}</p>
+                  <p><strong>Type:</strong> {selectedSystem.type}</p>
+                  <p><strong>Population Served:</strong> {selectedSystem.population?.toLocaleString() || 'N/A'}</p>
+                  <div className={`mt-2 px-2 py-1 rounded text-xs font-medium ${
+                    selectedSystem.risk_level === 'High' ? 'bg-red-100 text-red-800' :
+                    selectedSystem.risk_level === 'Medium' ? 'bg-orange-100 text-orange-800' :
+                    selectedSystem.risk_level === 'Low' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-green-100 text-green-800'
+                  }`}>
+                    Risk Level: {selectedSystem.risk_level}
+                  </div>
+                  {selectedSystem.total_violations > 0 && (
+                    <div className="mt-2 text-xs">
+                      <p><strong>Total Violations:</strong> {selectedSystem.total_violations}</p>
+                      <p><strong>Health-Based:</strong> {selectedSystem.health_violations}</p>
+                      <p><strong>Unaddressed:</strong> {selectedSystem.unaddressed_violations}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </InfoWindow>
